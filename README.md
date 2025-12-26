@@ -44,7 +44,8 @@ This project demonstrates full-stack C# development, database integration, CRUD 
 ## Project Demo Videos
 - **Early UI Demo - Donors, Donations & Categories**
  https://youtu.be/G9mieZYUmSg
-- **Full Application Demo - Expense & Expense Categories** 
+- **Full Application Demo - Expense & Expense Categories**
+  https://youtu.be/4M4fvbXG-oI
 ## Project Structure
 - /Components
 - /Models
