@@ -1,0 +1,184 @@
+﻿@page "/Expense Category"
+
+@using Microsoft.EntityFrameworkCore
+@using UcheNonProfit.Models
+
+@inject NonProfitDBContext _dbContext
+@inject NotificationService NotificationService
+
+@rendermode InteractiveServer
+
+
+<style>
+    .rz-grid-table {
+        width: unset;
+    }
+</style>
+
+<header>Expense Category</header>
+
+<RadzenDataGrid @ref="_ExpenseCategoryGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="@DataGridEditMode.Single"
+                Data="@_ExpenseCategories" TItem="UcheNonProfit.Models.ExpenseCategory" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+
+
+    <HeaderTemplate>
+        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle" Text="Category" Click="@InsertRow" Disabled="@(CategoryToInsert.Count() > 0)" />
+    </HeaderTemplate>
+
+    <Columns>
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.ExpenseCategory.ExpenseCategoryId)" Title="ID" Width="120px" Frozen="true" />
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.ExpenseCategory.CategoryName)" Title="Category Name" Width="280px">
+            <EditTemplate Context="_category">
+                <RadzenTextBox @bind-Value="_category.CategoryName" Style="width:200px; display: block" Name="category Name" aria-label="Enter Category Name" />
+                <RadzenRequiredValidator Text="Category Name is required" Component="category Name" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.ExpenseCategory.Description)" Title="Description" Width="280px">
+            <EditTemplate Context="_category">
+                <RadzenTextBox @bind-Value="_category.Description" Style="width:200px; display: block" Name="Description" aria-label="Enter Description" />
+                <RadzenRequiredValidator Text="Description is required" Component="Description" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Context="_category" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+            <Template Context="_category">
+                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@(args => EditRow(_category))" @onclick:stopPropagation="true">
+                </RadzenButton>
+                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(args => DeleteRow(_category))" @onclick:stopPropagation="true">
+                </RadzenButton>
+            </Template>
+
+            <EditTemplate Context="_category">
+                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(_category))" aria-label="Save">
+                </RadzenButton>
+                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@((args) => CancelEdit(_category))" aria-label="Cancel">
+                </RadzenButton>
+                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(args => DeleteRow(_category))" aria-label="Delete">
+                </RadzenButton>
+            </EditTemplate>
+
+        </RadzenDataGridColumn>
+
+
+    </Columns>
+
+</RadzenDataGrid>
+
+@code {
+
+    RadzenDataGrid<UcheNonProfit.Models.ExpenseCategory> _ExpenseCategoryGrid;
+    IEnumerable<UcheNonProfit.Models.ExpenseCategory> _ExpenseCategories;
+
+
+
+
+
+    List<UcheNonProfit.Models.ExpenseCategory> CategoryToInsert = new();
+    List<UcheNonProfit.Models.ExpenseCategory> CategoryToUpdate = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _ExpenseCategories = _dbContext.ExpenseCategories;
+        CategoryToInsert = new List<UcheNonProfit.Models.ExpenseCategory>();
+    }
+
+    void Reset()
+    {
+        CategoryToInsert.Clear();
+        CategoryToUpdate.Clear();
+    }
+
+
+    void Reset(UcheNonProfit.Models.ExpenseCategory order)
+    {
+        CategoryToInsert.Remove(order);
+        CategoryToUpdate.Remove(order);
+    }
+
+
+    void OnUpdateRow(UcheNonProfit.Models.ExpenseCategory order)
+    {
+        Reset(order);
+
+        _dbContext.Update(order);
+
+        _dbContext.SaveChanges();
+    }
+
+
+
+
+
+    void OnCreateRow(UcheNonProfit.Models.ExpenseCategory order)
+    {
+
+
+        _dbContext.Add(order);
+
+        _dbContext.SaveChanges();
+
+        CategoryToInsert.Remove(order);
+    }
+
+
+    // UI visual action of creating fields in the new row
+    async Task InsertRow()
+    {
+
+        var category = new UcheNonProfit.Models.ExpenseCategory();
+        CategoryToInsert.Add(category);
+        await _ExpenseCategoryGrid.InsertRow(category);
+    }
+
+    //UI Method (No database)
+    async Task EditRow(UcheNonProfit.Models.ExpenseCategory order)
+    {
+
+        CategoryToUpdate.Add(order);
+        await _ExpenseCategoryGrid.EditRow(order);
+    }
+
+    async Task DeleteRow(UcheNonProfit.Models.ExpenseCategory order)
+    {
+        Reset(order);
+
+        if (_ExpenseCategories.Contains(order))
+        {
+            _dbContext.Remove<UcheNonProfit.Models.ExpenseCategory>(order);
+
+            _dbContext.SaveChanges();
+
+            // Refresh the UI Grid
+            await _ExpenseCategoryGrid.Reload();
+        }
+        else
+        {
+            // means records was not in the DB table
+            _ExpenseCategoryGrid.CancelEditRow(order);
+            await _ExpenseCategoryGrid.Reload();
+        }
+    }
+
+    async Task SaveRow(UcheNonProfit.Models.ExpenseCategory order)
+    {
+        await _ExpenseCategoryGrid.UpdateRow(order);
+    }
+
+    void CancelEdit(UcheNonProfit.Models.ExpenseCategory order)
+    {
+        Reset(order);
+
+        _ExpenseCategoryGrid.CancelEditRow(order);
+
+        var orderEntry = _dbContext.Entry(order);
+        if (orderEntry.State == EntityState.Modified)
+        {
+            orderEntry.CurrentValues.SetValues(orderEntry.OriginalValues);
+            orderEntry.State = EntityState.Unchanged;
+        }
+    }
+}

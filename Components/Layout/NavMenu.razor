@@ -1,0 +1,47 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/donors" Match="NavLinkMatch.All">UcheNonProfit</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/donors" Match="NavLinkMatch.All">
+                <span class="bi bi-people-fill" aria-hidden="true"></span> Donors
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/Donations" Match="NavLinkMatch.All">
+                <span class="bi-journal-arrow-down" aria-hidden="true"></span> Donations
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/DonationCategory" Match="NavLinkMatch.All">
+                <span class="bi-list-ul" aria-hidden="true"></span>
+                <span class="nav-link-text"> Donation Category </span>
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/Expense Category" Match="NavLinkMatch.All">
+                <span class="bi-list-check" aria-hidden="true"></span>
+                <span class="nav-link-text"> Expense Category</span>
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/Expenses" Match="NavLinkMatch.All">
+                <span class="bi-cash-stack" aria-hidden="true"></span> Expense
+            </NavLink>
+        </div>
+
+        
+    </nav>
+</div>
+

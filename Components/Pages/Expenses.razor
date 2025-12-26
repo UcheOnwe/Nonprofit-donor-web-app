@@ -1,0 +1,276 @@
+﻿@page "/Expenses"
+
+@using Microsoft.EntityFrameworkCore
+@using UcheNonProfit.Models
+
+
+@inject NonProfitDBContext _dbContext
+@inject NotificationService NotificationService
+
+@rendermode InteractiveServer
+
+<style>
+    .rz-grid-table {
+        width: unset;
+    }
+</style>
+
+<header>Expense</header>
+
+<RadzenDataGrid @ref="_ExpenseGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="@DataGridEditMode.Single"
+                Data="@_Expenses" TItem="UcheNonProfit.Models.Expense" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+
+    <HeaderTemplate>
+        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle" Text="Category" Click="@InsertRow" Disabled="@(ExpenseToInsert.Count() > 0)" />
+    </HeaderTemplate>
+
+    <Columns>
+
+        @* this part is meant for ID that is required(Reminder) *@
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Expense.ExpenseCategoryId)" Title="ID" Width="120px" Frozen="true" />
+
+
+
+
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Expense.ExpenseCategoryId)" Title="Category" Width="280px">
+            <Template Context="expense">
+                @{
+                    var cat = _ExpenseCategories
+                    ?.FirstOrDefault(c => c.ExpenseCategoryId == expense.ExpenseCategoryId);
+                }
+                @cat?.CategoryName
+            </Template>
+
+
+            <EditTemplate Context="expense">
+                <RadzenDropDown @bind-Value="expense.ExpenseCategoryId" Style="width:200px; display: block" Name="ExpenseCategory" aria-label="Choose Category Name"
+                                Data="@_ExpenseCategories" TextProperty="CategoryName" ValueProperty="ExpenseCategoryId" />
+                <RadzenRequiredValidator Text="Expense Category Name is required" Component="ExpenseCategory" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Expense.Amount)" Title="Amount" Width="280px">
+            <EditTemplate Context="expense">
+                <RadzenNumeric @bind-Value="expense.Amount" Style="width:200px; display: block" Name="Amount" aria-label="Enter Amount" />
+                <RadzenRequiredValidator Text="Amount is required" Component="Amount" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Expense.PaymentMethod)" Title="Payment Method" Width="280px">
+            <Template Context="expense">
+                @expense.PaymentMethod
+            </Template>
+
+            <EditTemplate Context="expense">
+                <RadzenDropDown @bind-Value="expense.PaymentMethod" Style="width:180px; display: block" Name="PaymentMethod" aria-label="Choose Payment Method"
+                                Data="@_PaymentMethods">
+
+                </RadzenDropDown>
+                <RadzenRequiredValidator Text="Payment Method is required" Component="PaymentMethod" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Expense.ExpenseDate)" Title="ExpenseDate" Width="280px">
+            <EditTemplate Context="expense">
+                <RadzenDatePicker @bind-Value="expense.ExpenseDate" Style="width:200px; display: block" Name="ExpenseDate" aria-label="Enter ExpenseDate" />
+                <RadzenRequiredValidator Text="ExpenseDate is required" Component="ExpenseDate" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Expense.EntryDate)" Title="EntryDate" Width="280px">
+            <EditTemplate Context="expense">
+                <RadzenDatePicker @bind-Value="expense.EntryDate" Style="width:200px; display: block" Name="EntryDate" aria-label="Enter EntryDate" />
+                <RadzenRequiredValidator Text="EntryDate is required" Component="EntryDate" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Expense.Payee)" Title="Payee" Width="280px">
+            <EditTemplate Context="expense">
+                <RadzenTextBox @bind-Value="expense.Payee" Style="width:200px; display: block" Name="Payee" aria-label="Enter Payee info" />
+                <RadzenRequiredValidator Text="Payee is required" Component="Payee" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Expense.ReferenceNumber)" Title="Reference#" Width="280px">
+            <EditTemplate Context="expense">
+                <RadzenNumeric @bind-Value="expense.ReferenceNumber" Style="width:200px; display: block" Name="ReferenceNumber" aria-label="Enter Reference#" />
+                <RadzenRequiredValidator Text="Reference# is required" Component="ReferenceNumber" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Expense.RecordedBy)" Title="RecordedBy" Width="280px">
+            <EditTemplate Context="expense">
+                <RadzenTextBox @bind-Value="expense.RecordedBy" Style="width:200px; display: block" Name="RecordedBy" aria-label="Please enter recording" />
+                <RadzenRequiredValidator Text="Recording is required" Component="RecordedBy" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Expense.Notes)" Title="Notes" Width="380px">
+            <EditTemplate Context="expense">
+                <RadzenTextBox @bind-Value="expense.Notes" Style="width:200px; height:120px; display: block;" Name="Notes" aria-label="Please enter Note" />
+                
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+
+
+        
+
+        <RadzenDataGridColumn Context="expense" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+            <Template Context="expense">
+                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@(args => EditRow(expense))" @onclick:stopPropagation="true">
+                </RadzenButton>
+                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(args => DeleteRow(expense))" @onclick:stopPropagation="true">
+                </RadzenButton>
+            </Template>
+
+            <EditTemplate Context="expense">
+                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(expense))" aria-label="Save">
+                </RadzenButton>
+                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@((args) => CancelEdit(expense))" aria-label="Cancel">
+                </RadzenButton>
+                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(args => DeleteRow(expense))" aria-label="Delete">
+                </RadzenButton>
+            </EditTemplate>
+
+        </RadzenDataGridColumn>
+
+    </Columns>
+
+   
+
+</RadzenDataGrid>
+
+
+@code {
+    RadzenDataGrid<UcheNonProfit.Models.Expense> _ExpenseGrid;
+    IEnumerable<UcheNonProfit.Models.ExpenseCategory> _ExpenseCategories;
+
+    IEnumerable<UcheNonProfit.Models.Expense> _Expenses;
+
+    List<UcheNonProfit.Models.Expense> ExpenseToInsert = new();
+    List<UcheNonProfit.Models.Expense> ExpenseToUpdate = new();
+
+    List<string> _PaymentMethods = new()
+    {
+        "Cash",
+        "Check",
+        "Credit Card",
+        "ACH",
+        "Wire",
+        "Other"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _Expenses = _dbContext.Expenses;
+        _ExpenseCategories = _dbContext.ExpenseCategories;
+        ExpenseToInsert = new List<UcheNonProfit.Models.Expense>();
+        ExpenseToUpdate = new List<UcheNonProfit.Models.Expense>();
+    }
+
+    void Reset()
+    {
+        ExpenseToInsert.Clear();
+        ExpenseToUpdate.Clear();
+    }
+
+    void Reset(UcheNonProfit.Models.Expense order)
+    {
+        ExpenseToInsert.Remove(order);
+        ExpenseToUpdate.Remove(order);
+    }
+
+    void OnUpdateRow(UcheNonProfit.Models.Expense order)
+    {
+        Reset(order);
+
+        _dbContext.Update(order);
+
+        _dbContext.SaveChanges();
+    }
+
+    void OnCreateRow(UcheNonProfit.Models.Expense order)
+    {
+
+
+        _dbContext.Add(order);
+
+        _dbContext.SaveChanges();
+
+        ExpenseToInsert.Remove(order);
+    }
+
+
+    // UI visual action of creating fields in the new row
+    async Task InsertRow()
+    {
+
+        var Donation = new UcheNonProfit.Models.Expense()
+        {
+            ExpenseDate = System.DateOnly.FromDateTime(DateTime.Today),
+            EntryDate = DateTime.Now
+        
+        };
+        ExpenseToInsert.Add(Donation);
+        await _ExpenseGrid.InsertRow(Donation);
+    }
+
+    //UI Method (No database)
+    async Task EditRow(UcheNonProfit.Models.Expense order)
+    {
+
+        ExpenseToUpdate.Add(order);
+        await _ExpenseGrid.EditRow(order);
+    }
+
+    async Task DeleteRow(UcheNonProfit.Models.Expense order)
+    {
+        Reset(order);
+
+        if (_Expenses.Contains(order))
+        {
+            _dbContext.Remove<UcheNonProfit.Models.Expense>(order);
+
+            _dbContext.SaveChanges();
+
+            // Refresh the UI Grid
+            await _ExpenseGrid.Reload();
+        }
+        else
+        {
+            // means records was not in the DB table
+            _ExpenseGrid.CancelEditRow(order);
+            await _ExpenseGrid.Reload();
+        }
+    }
+
+    async Task SaveRow(UcheNonProfit.Models.Expense order)
+    {
+        await _ExpenseGrid.UpdateRow(order);
+    }
+
+    void CancelEdit(UcheNonProfit.Models.Expense order)
+    {
+        Reset(order);
+
+        _ExpenseGrid.CancelEditRow(order);
+
+        var orderEntry = _dbContext.Entry(order);
+        if (orderEntry.State == EntityState.Modified)
+        {
+            orderEntry.CurrentValues.SetValues(orderEntry.OriginalValues);
+            orderEntry.State = EntityState.Unchanged;
+        }
+    }
+
+
+
+
+}

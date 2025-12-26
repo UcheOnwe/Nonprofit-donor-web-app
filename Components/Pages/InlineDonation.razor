@@ -1,0 +1,251 @@
+﻿@page "/Donations"
+
+@using Microsoft.EntityFrameworkCore
+@using UcheNonProfit.Models
+
+
+@inject NonProfitDBContext _dbContext
+@inject NotificationService NotificationService
+
+@rendermode InteractiveServer
+
+
+
+<style>
+    .rz-grid-table {
+        width: unset;
+    }
+</style>
+
+<header>Donation</header>
+
+<RadzenDataGrid @ref="_donationGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="@DataGridEditMode.Single"
+                Data="@_donations" TItem="UcheNonProfit.Models.Donation" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+
+
+    <HeaderTemplate>
+        <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle" Text="Donation" Click="@InsertRow" Disabled="@(DonationToInsert.Count() > 0)" />
+    </HeaderTemplate>
+
+    <Columns>
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Donation.DonorId)" Title="Donor" Width="280px">
+            <Template Context = "_Indonation">
+                @_donorInfo.FirstOrDefault(d => d.Id == _Indonation.DonorId)?.FullName
+            </Template>
+            <EditTemplate Context="_Indonation">
+                <RadzenDropDown @bind-Value="_Indonation.DonorId" Style="width:200px; display: block" Name="Donor" aria-label="Enter Donor Name"
+                Data = "_donorInfo" TextProperty="FullName" ValueProperty="Id"/>
+                <RadzenRequiredValidator Text="Donor is required" Component="Donor" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Donation.DonationDate)" Title="Donation Date" Width="280px">
+            <EditTemplate Context="_Indonation">
+                <RadzenDatePicker @bind-Value="_Indonation.DonationDate" Style="width:200px; display: block" Name="Donation Date" aria-label="Enter Donation Date" />
+                <RadzenRequiredValidator Text="Donation Date is required" Component="Donation Date" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Donation.EntryDate)" Title="Entry Date" Width="280px">
+            <EditTemplate Context="_Indonation">
+                <RadzenDatePicker @bind-Value="_Indonation.EntryDate" Style="width:200px; display: block" Name="Entry Date" aria-label="Enter Entry Date" />
+                <RadzenRequiredValidator Text="Entry Date is required" Component="Entry Date" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Donation.Amount)" Title="Amount" Width="280px">
+            <EditTemplate Context="_Indonation">
+                <RadzenNumeric @bind-Value="_Indonation.Amount" Style="width:200px; display: block" Name="Amount" aria-label="Enter Amount in USD" />
+                <RadzenRequiredValidator Text="Amount is required" Component="Amount" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Donation.PaymentMethod)" Title="PaymentMethod" Width="280px">
+            <EditTemplate Context="_Indonation">
+                <RadzenTextBox @bind-Value="_Indonation.PaymentMethod" Style="width:200px; display: block" Name="PaymentMethod" aria-label="Enter PaymentMethod" />
+                <RadzenRequiredValidator Text="PaymentMethod is required" Component="PaymentMethod" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Donation.ReferenceNumber)" Title="Reference#" Width="280px">
+            <EditTemplate Context="_Indonation">
+                <RadzenNumeric @bind-Value="_Indonation.ReferenceNumber" Style="width:200px; display: block" Name="ReferenceNumber" aria-label="Enter Reference #" />
+                <RadzenRequiredValidator Text="Reference # is required" Component="ReferenceNumber" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Donation.Notes)" Title="Notes" Width="280px">
+            <EditTemplate Context="_Indonation">
+                <RadzenTextBox @bind-Value="_Indonation.Notes" Style="width:200px; display: block" Name="Notes" aria-label="Enter Note " />
+                <RadzenRequiredValidator Text="Notes  is required" Component="Notes" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn Property="@nameof(UcheNonProfit.Models.Donation.RecordedBy)" Title="RecordedBy" Width="280px">
+            <EditTemplate Context="_Indonation">
+                <RadzenTextBox @bind-Value="_Indonation.RecordedBy" Style="width:200px; display: block" Name="RecordedBy" aria-label="Record" />
+                <RadzenRequiredValidator Text="Record is required" Component="RecordedBy" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+
+        
+
+
+        <RadzenDataGridColumn Context="_Indonation" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+            <Template Context="_Indonation">
+                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@(args => EditRow(_Indonation))" @onclick:stopPropagation="true">
+                </RadzenButton>
+                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(args => DeleteRow(_Indonation))" @onclick:stopPropagation="true">
+                </RadzenButton>
+            </Template>
+            <EditTemplate Context="_Indonation">
+                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(_Indonation))" aria-label="Save">
+                </RadzenButton>
+                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="rz-my-1 rz-ms-1" Click="@((args) => CancelEdit(_Indonation))" aria-label="Cancel">
+                </RadzenButton>
+                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Size="ButtonSize.Medium" Shade="Shade.Lighter" class="rz-my-1 rz-ms-1" Click="@(args => DeleteRow(_Indonation))" aria-label="Delete">
+                </RadzenButton>
+            </EditTemplate>
+        </RadzenDataGridColumn>
+    </Columns>
+
+
+
+</RadzenDataGrid>
+
+@code {
+    RadzenDataGrid<UcheNonProfit.Models.Donation> _donationGrid;
+    IEnumerable<UcheNonProfit.Models.Donation> _donations;
+
+
+    List<UcheNonProfit.Models.Donation> DonationToInsert = new();
+    List<UcheNonProfit.Models.Donation> DonationToUpdate = new();
+
+
+    IEnumerable<Donor> _donors;
+    IEnumerable<DonationCategory> _categories;
+
+    List<DonorInfo> _donorInfo = new();
+    int _Id;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _donations = _dbContext.Donations;
+        DonationToInsert = new List<UcheNonProfit.Models.Donation>();
+        _donorInfo = new List<DonorInfo>();
+
+        _donors = _dbContext.Donors;
+
+        foreach (var d in _donors)
+        {
+            var item = new DonorInfo()
+            {
+                Id = d.DonorId,
+                FullName = d.FirstName + " " + d.LastName
+            };
+            _donorInfo.Add(item);
+        }
+    }
+
+    void Reset()
+    {
+        DonationToInsert.Clear();
+        DonationToUpdate.Clear();
+    }
+
+    void Reset(UcheNonProfit.Models.Donation order)
+    {
+        DonationToInsert.Remove(order);
+        DonationToUpdate.Remove(order);
+    }
+
+    void OnUpdateRow(UcheNonProfit.Models.Donation order)
+    {
+        Reset(order);
+
+        _dbContext.Update(order);
+
+        _dbContext.SaveChanges();
+    }
+
+    void OnCreateRow(UcheNonProfit.Models.Donation order)
+    {
+
+
+        _dbContext.Add(order);
+
+        _dbContext.SaveChanges();
+
+        DonationToInsert.Remove(order);
+    }
+
+
+    // UI visual action of creating fields in the new row
+    async Task InsertRow()
+    {
+
+        var Donation = new UcheNonProfit.Models.Donation();
+        DonationToInsert.Add(Donation);
+        await _donationGrid.InsertRow(Donation);
+    }
+
+    //UI Method (No database)
+    async Task EditRow(UcheNonProfit.Models.Donation order)
+    {
+
+        DonationToUpdate.Add(order);
+        await _donationGrid.EditRow(order);
+    }
+
+    async Task DeleteRow(UcheNonProfit.Models.Donation order)
+    {
+        Reset(order);
+
+        if (_donations.Contains(order))
+        {
+            _dbContext.Remove<UcheNonProfit.Models.Donation>(order);
+
+            _dbContext.SaveChanges();
+
+            // Refresh the UI Grid
+            await _donationGrid.Reload();
+        }
+        else
+        {
+            // means records was not in the DB table
+            _donationGrid.CancelEditRow(order);
+            await _donationGrid.Reload();
+        }
+    }
+
+    async Task SaveRow(UcheNonProfit.Models.Donation order)
+    {
+        await _donationGrid.UpdateRow(order);
+    }
+
+    void CancelEdit(UcheNonProfit.Models.Donation order)
+    {
+        Reset(order);
+
+        _donationGrid.CancelEditRow(order);
+
+        var orderEntry = _dbContext.Entry(order);
+        if (orderEntry.State == EntityState.Modified)
+        {
+            orderEntry.CurrentValues.SetValues(orderEntry.OriginalValues);
+            orderEntry.State = EntityState.Unchanged;
+        }
+    }
+
+    class DonorInfo
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; }
+
+    }
+
+}

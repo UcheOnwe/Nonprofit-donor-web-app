@@ -1,0 +1,31 @@
+﻿@inherits LayoutComponentBase
+<RadzenComponents @rendermode="InteractiveServer" />
+
+
+<HeadContent>
+    <!-- Radzen theme css -->
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/default-base.css" /> <link rel="stylesheet" href="_content/Radzen.Blazor/css/default.css" />
+    <!-- Material icons used by RadzenButton "Icon" property -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" /> 
+</HeadContent> 
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>

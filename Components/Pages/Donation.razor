@@ -1,0 +1,121 @@
+﻿@page "/InlineDonations"
+@using Microsoft.EntityFrameworkCore
+@using UcheNonProfit.Models
+@using DonationModel1 = UcheNonProfit.Models.Donation
+
+@inject NonProfitDBContext _dbContext
+@inject NotificationService NotificationService
+
+@rendermode InteractiveServer
+
+<div class="rz-p-0 rz-p-md-12" style="max-width: 500px; ">
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeSM="6">
+            <RadzenStack>
+
+                <RadzenLabel Text="Enter Donation Informtion" />
+
+                <RadzenFormField Text="Select Donor">
+                    <RadzenDropDown @bind-Value=@_Id Data=@_donorInfo TextProperty="@nameof(DonorInfo.FullName)" ValueProperty="@nameof(DonorInfo.Id)" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Entry">
+                    <RadzenDatePicker @bind-Value="@_donation.EntryDate" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Donation Date">
+                    <RadzenDatePicker @bind-Value="@_donation.DonationDate" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Amount in USD">
+                    <RadzenNumeric @bind-Value="@_donation.Amount" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Payment Method">
+                    <RadzenTextBox @bind-Value="@_donation.PaymentMethod" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Reference Number">
+                    <RadzenTextBox @bind-Value="@_donation.ReferenceNumber" />
+                </RadzenFormField>
+
+                <RadzenButton Click="@SaveDonerInfo" Text="SUBMIT DONER INFO" ButtonStyle="@ButtonStyle.Primary" />
+
+            </RadzenStack>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeSM="6">
+            <RadzenStack>
+                <RadzenFormField Text="Notes">
+                    <RadzenTextArea @bind-Value="@_donation.Notes" />
+                </RadzenFormField>
+            </RadzenStack>
+        </RadzenColumn>
+
+    </RadzenRow>
+
+</div>
+
+@code {
+    DonationModel1 _donation = new();
+    IEnumerable<Donor> _donors;
+    List<DonorInfo> _donorInfo;
+    int _Id;
+
+    protected override Task OnInitializedAsync()
+    {
+        _donation = new DonationModel1();
+        _donorInfo = new();
+
+        //Get all donors
+        _donors = _dbContext.Donors;
+        //add to the list of _donorInfo
+        foreach (var d in _donors)
+        {
+            var item = new DonorInfo()
+            {
+                Id = d.DonorId,
+                FullName = d.FirstName + " " + d.LastName
+            };
+            _donorInfo.Add(item);
+        }
+        return base.OnInitializedAsync();
+
+    }
+
+    private void SaveDonerInfo()
+    {
+        try
+        {
+
+            _donation.DonorId = _Id;
+
+            //Add to db
+            var result = _dbContext.Donations.Add(_donation);
+            _dbContext.SaveChanges();
+            // Giver user message
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Info, Summary = "Add Donation Success", Detail = "Donation has been added" });
+
+            // reset fields
+
+
+
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Donation Failed", Detail = "Could not add Donation" });
+
+        }
+
+
+    }
+
+    class DonorInfo
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; }
+
+    }
+
+
+}
